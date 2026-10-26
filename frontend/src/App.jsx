@@ -18,9 +18,7 @@ function App() {
 
   return (
     <div>
-      <h1>DevCollab</h1>
-      <p>Welcome to DevCollab!</p>
-
+      <h1>CoDev</h1>
       <button onClick={sendMessage}>
         Send message
       </button>

@@ -1,28 +1,18 @@
+import { Routes, Route, Navigate } from "react-router-dom";
+import Register from "./components/register";
+import Login from "./components/authentication";
 
 function App() {
-  async function sendMessage() {
-    const response = await fetch("api/echo", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        message: "Hello, backend!",
-        status: "ok"
-      })
-    });
-
-    const result = await response.json();
-    console.log(result);
-  }
-
   return (
-    <div>
-      <h1>CoDev</h1>
-      <button onClick={sendMessage}>
-        Send message
-      </button>
-    </div>
+    <Routes>
+      <Route path="/" element={<Navigate to="/authentication" replace />} />
+
+      <Route path="/register" element={<Register />} />
+      <Route path="/authentication" element={<Login />} />
+
+      {/* Add future pages here */}
+      {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+    </Routes>
   );
 }
 

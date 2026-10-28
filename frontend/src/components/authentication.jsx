@@ -1,84 +1,105 @@
+
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./form.css";
-function Authentication() {
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
 
-    async function signIn(event) {
-        event.preventDefault();
+function Authentication({ onLogin }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-        setError("");
-        setSuccess("");
+  const navigate = useNavigate();
 
-        if (!username.trim() || !password) {
-            setError("Please fill in all fields");
-            return;
-        }
+  async function signIn(event) {
+    event.preventDefault();
+    setError("");
 
-        try {
-            const response = await fetch("/api/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    username: username.trim(),
-                    password
-                })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                setError(data.message || "Login failed");
-                return;
-            }
-
-            setSuccess("Login successful!");
-
-            // Later: navigate to your dashboard
-
-        } catch (error) {
-            setError("An error occurred while logging in");
-        }
+    if (!username.trim() || !password) {
+      setError("Please fill in all fields");
+      return;
     }
 
-    return (
-        <div className="container">
-            <h1>CoDev</h1>
-            <h2>Log in</h2>
+    setLoading(true);
 
-            <form onSubmit={signIn} className="AuthForm">
-                <input
-                    type="text"
-                    placeholder="Enter username"
-                    className="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                />
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: username.trim(),
+          password,
+        }),
+      });
 
-                <input
-                    type="password"
-                    placeholder="Enter password"
-                    className="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
+      const data = await response.json();
 
-                <button type="submit">Sign in</button>
+      if (!response.ok) {
+        setError(data.message || "Login failed");
+        return;
+      }
 
-                {error && <p>{error}</p>}
-                {success && <p>{success}</p>}
-            </form>
+      // Fetch the logged-in user
+      const meResponse = await fetch("/api/me");
+      const meData = await meResponse.json();
 
-            <p>
-                Don't have an account? <Link to="/register">Register</Link>
-            </p>
-        </div>
-    );
+      if (!meResponse.ok) {
+        setError("Could not retrieve your session. Please try again.");
+        return;
+      }
+
+      // Update App.jsx authentication state
+      onLogin(meData.user);
+
+      // Go to dashboard
+      navigate("/dashboard", { replace: true });
+    } catch (error) {
+      setError("An error occurred while logging in");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="container">
+      <h1>CoDev</h1>
+      <h2>Log in</h2>
+
+      <form onSubmit={signIn} className="AuthForm">
+        <input
+          type="text"
+          placeholder="Enter username"
+          className="username"
+          autoComplete="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          disabled={loading}
+        />
+
+        <input
+          type="password"
+          placeholder="Enter password"
+          className="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={loading}
+        />
+
+        <button type="submit" disabled={loading}>
+          {loading ? "Signing in..." : "Sign in"}
+        </button>
+
+        {error && <p role="alert">{error}</p>}
+      </form>
+
+      <p>
+        Don't have an account? <Link to="/register">Register</Link>
+      </p>
+    </div>
+  );
 }
 
 export default Authentication;
